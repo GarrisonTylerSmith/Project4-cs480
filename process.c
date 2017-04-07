@@ -78,12 +78,14 @@ void InitProcess( PCB* phead, MetaDataNode* mhead, ConfigFile* config )
     }
 }
 
-int RunProcess( PCB* process, ConfigFile* config, char* timestr, QueueNode** InterruptHead,  char* logBuffer)
+int RunProcess( PCB* process, ConfigFile* config, char* timestr, 
+  QueueNode** InterruptHead,  char* logBuffer, int* quantumCycle)
 {
     MetaDataNode* current = process->current;
     char* outputString = NodeToString(current);
-    char toPrint[MAX_LINE_LENGTH];
+    char toPrint[MAX_LINE_LENGTH]; 
     pthread_t ioThreads;
+    int cyclesToRun;
     Thread* threadData = malloc(sizeof(Thread));
 
     if(current->cycleTime != 0)
@@ -104,22 +106,24 @@ int RunProcess( PCB* process, ConfigFile* config, char* timestr, QueueNode** Int
           threadData->ProcessThread = process;
 
           pthread_create(&ioThreads, NULL, (void*) ThreadProcess, (void*) threadData);
-          if(strcmp(config->schedulingCode, "FCFS-N")== 0 || 
-            strcmp(config->schedulingCode, "SJF-N")== 0)
-          {
-            pthread_join(ioThreads, NULL);
-          }
-          else
-          {
-            return PROCESS_SET_BLOCKED;
-          }
-
+          pthread_join(ioThreads, NULL);
         }
         else
         {
-          while(current->cycleTime != 0)
+
+          if(current->cycleTime > config->quantumTime)
+          {
+            cyclesToRun = *quantumCycle;
+          }
+          else
+          {
+            cyclesToRun = current->cycleTime;
+          }
+          while(cyclesToRun != 0)
           {
             delay(config->pCycleTime);
+            quantumCycle --;
+            cyclesToRun --;
             current->cycleTime --;
             process->totalTime -= config->pCycleTime;
 

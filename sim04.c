@@ -37,6 +37,7 @@ int main(int argc, char* argv[])
     phead->processID = -1;
     PCB* runningPCB = malloc(sizeof(PCB));
     PCB* processInterate = phead;
+    int quantumCycle = 0;
 
     char timestr[50];
 
@@ -52,8 +53,7 @@ int main(int argc, char* argv[])
     }
 
     PrintWrapper("\n Operating System Simulator \n", logBuffer, NULL);
-    PrintWrapper("=========================\n\n", logBuffer, NULL);
-    printf("\n");
+    PrintWrapper("=========================\n", logBuffer, NULL);
 
     // Create new config file and parse
     ConfigFile config = {};
@@ -119,7 +119,7 @@ int main(int argc, char* argv[])
     snprintf(toPrint, MAX_LINE_LENGTH, "Time: %9s, OS: All processes initialized in New State\n", timestr);
     PrintWrapper(toPrint, logBuffer, config.logTo);
 
-    snprintf(toPrint, MAX_LINE_LENGTH, "Time: %9s, OS: All processes now set in Ready State\n", timestr);
+    snprintf(toPrint, MAX_LINE_LENGTH, "Time: %9s, OS: All processes now set in Ready State\n\n", timestr);
     PrintWrapper(toPrint, logBuffer, config.logTo);
 
 
@@ -127,9 +127,7 @@ int main(int argc, char* argv[])
     while(processInterate->next != NULL)
     {
       accessTimer(GET_TIME_DIFF, timestr);
-      // snprintf(toPrint, MAX_LINE_LENGTH, "\nTime: %9s, OS: %s, Strategy selects Process %d with time: %d\n",
-      //   timestr, config.schedulingCode, runningPCB->processID);
-      // PrintWrapper(toPrint, logBuffer, config.logTo);
+
 
       if(strcmp(config.schedulingCode, "FCFS-P") == 0 || strcmp(config.schedulingCode, "FCF-N") == 0)
         {
@@ -139,6 +137,8 @@ int main(int argc, char* argv[])
       {
         Enqueue(processInterate, &qhead, processInterate->totalTime);
       }
+
+      // check round robin right here
       else
       {
         Enqueue(processInterate, &qhead, 5);
@@ -148,9 +148,6 @@ int main(int argc, char* argv[])
 
     }
 
-    snprintf(toPrint, MAX_LINE_LENGTH, "Time: %9s, OS: Process %d set in Running state\n", 
-      timestr, phead->processID);
-    PrintWrapper(toPrint, logBuffer, config.logTo);
 
     // for loop to run through the process of the metadata
     Boolean WorkMeta = True;
@@ -158,11 +155,24 @@ int main(int argc, char* argv[])
     // runs through the multiple processes
     while(qhead->priority != -1)
     {
-      WorkMeta = True;
       Dequeue(&qhead, &runningPCB);
+
+      snprintf(toPrint, MAX_LINE_LENGTH, "Time: %9s, OS: %s, Strategy selects Process %d with time: %d\n",
+        timestr, config.schedulingCode, runningPCB->processID, runningPCB->totalTime);
+      PrintWrapper(toPrint, logBuffer, config.logTo);
+
+      snprintf(toPrint, MAX_LINE_LENGTH, "Time: %9s, OS: Process %d set in Running state\n", 
+        timestr, runningPCB->processID);
+      PrintWrapper(toPrint, logBuffer, config.logTo);
+
+      // gets the quantum time when running RR-P
+      quantumCycle = config.quantumTime;
+
+      WorkMeta = True;
       while( WorkMeta )
       {
-        ReturnValue = RunProcess(runningPCB, &config, timestr,InterruptHead, logBuffer);
+
+        ReturnValue = RunProcess(runningPCB, &config, timestr,&InterruptHead, logBuffer, &quantumCycle);
 
         if(ReturnValue == 1)
         {
@@ -170,6 +180,9 @@ int main(int argc, char* argv[])
         }
 
       }
+      snprintf(toPrint, MAX_LINE_LENGTH, "Time: %9s, OS: Process %d set to Exit state\n\n", 
+        timestr, runningPCB->processID);
+      PrintWrapper(toPrint, logBuffer, config.logTo);
     }
 
 
@@ -198,7 +211,7 @@ int PrintWrapper(char* toPrint, char* buffer, char* logTo)
   strcat(buffer, toPrint);
   if(logTo == NULL || strcmp(logTo, "Monitor") == 0 || strcmp(logTo,"Both") == 0)
   {
-    printf("%s\n", toPrint);
+    printf("%s", toPrint);
   }
   return 0;
 }

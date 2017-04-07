@@ -84,10 +84,14 @@ void InitProcess( PCB*, MetaDataNode*, ConfigFile*);
   * @param[in] Char
   *       gets the log buffer for the log issues
   *
+  * @param[in] int
+  *       gets the quantum time passes as an int 
+  *         used for RR-P
+  *
   *
   * @note None
   */
-int RunProcess( PCB*, ConfigFile*, char*,QueueNode**,  char* );
+int RunProcess( PCB*, ConfigFile*, char*,QueueNode**,  char* , int*);
 /**
   * @brief Function to runs the process within the program
   *

@@ -1,7 +1,7 @@
 Start Simulator Configuration File
 Version/Phase: 1.0
 File Path: testfile.mdf
-CPU Scheduling Code: SJF-N
+CPU Scheduling Code: SRTF-P
 Quantum Time (cycles): 55
 Memory Available (KB): 667
 Processor Cycle Time (msec): 10
